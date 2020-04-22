@@ -469,6 +469,32 @@ var _ = Describe("Configurations", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(domXml).To(ContainSubstring("OVMF_CODE.secboot.fd"))
 			})
+
+			It("[test_id:1789]should have specified memory and CPU", func() {
+				By("Creating a VirtualMachineInstance with EFI bootloader using Fedora image")
+				vmi := tests.NewRandomVMIWithEFIBootloader()
+
+				memoryAmount := 1048576
+				memory := resource.MustParse(fmt.Sprintf("%dKi", memoryAmount))
+				vmi.Spec.Domain.Memory = &v1.Memory{Guest: &memory}
+
+				cores := uint32(2)
+				vmi.Spec.Domain.CPU = &v1.CPU{Cores: cores}
+
+				vmi, err = virtClient.VirtualMachineInstance(tests.NamespaceTestDefault).Create(vmi)
+				Expect(err).ToNot(HaveOccurred())
+
+				tests.WaitUntilVMIReady(vmi, tests.LoggedInAlpineExpecter)
+				By("Checking values on domain XML")
+				domXML, err := tests.GetRunningVirtualMachineInstanceDomainXML(virtClient, vmi)
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Checking to see that the VM has the specified memory")
+				Expect(domXML).To(ContainSubstring(fmt.Sprintf("<memory unit='KiB'>%d</memory>", memoryAmount)))
+
+				By("Checking to see that the VM has the specified CPU")
+				Expect(domXML).To(ContainSubstring(fmt.Sprintf("cores='%d'", cores)))
+			})
 		})
 
 		Context("[rfe_id:140][crit:medium][vendor:cnv-qe@redhat.com][level:component]with diverging guest memory from requested memory", func() {
