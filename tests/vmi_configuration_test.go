@@ -446,7 +446,7 @@ var _ = Describe("Configurations", func() {
 				By("Starting a VirtualMachineInstance")
 				vmi, err = virtClient.VirtualMachineInstance(tests.NamespaceTestDefault).Create(vmi)
 				Expect(err).ToNot(HaveOccurred())
-				tests.WaitUntilVMIReady(vmi, tests.LoggedInAlpineExpecter)
+				tests.WaitUntilVMIReady(vmi, tests.SecureBootExpecter)
 
 				By("Checking if UEFI is enabled")
 				domXml, err := tests.GetRunningVirtualMachineInstanceDomainXML(virtClient, vmi)
@@ -455,7 +455,7 @@ var _ = Describe("Configurations", func() {
 			})
 
 			It("should enable EFI secure boot", func() {
-				vmi := tests.NewRandomVMIWithSecureBoot()
+				vmi := tests.NewRandomVMIWithEFIBootloader()
 
 				By("Starting a VirtualMachineInstance")
 				vmi, err = virtClient.VirtualMachineInstance(tests.NamespaceTestDefault).Create(vmi)

@@ -1957,14 +1957,16 @@ func NewRandomVMIWithEphemeralDiskAndConfigDriveUserdataHighMemory(containerImag
 	return vmi
 }
 
-func NewRandomVMIWithEFIBootloader() *v1.VirtualMachineInstance {
-	vmi := NewRandomVMIWithEphemeralDiskHighMemory(ContainerDiskFor(ContainerDiskAlpine))
+func NewRandomVMIWithEFIBootloaderWithoutSecureBoot() *v1.VirtualMachineInstance {
+	vmi := NewRandomVMIWithEphemeralDiskHighMemory(ContainerDiskFor(ContainerDiskFedora))
 
 	// EFI needs more memory than other images
 	vmi.Spec.Domain.Resources.Requests[k8sv1.ResourceMemory] = resource.MustParse("1Gi")
 	vmi.Spec.Domain.Firmware = &v1.Firmware{
 		Bootloader: &v1.Bootloader{
-			EFI: &v1.EFI{},
+			EFI: &v1.EFI{
+				SecureBoot: NewBool(false),
+			},
 		},
 	}
 
@@ -1972,7 +1974,7 @@ func NewRandomVMIWithEFIBootloader() *v1.VirtualMachineInstance {
 
 }
 
-func NewRandomVMIWithSecureBoot() *v1.VirtualMachineInstance {
+func NewRandomVMIWithEFIBootloader() *v1.VirtualMachineInstance {
 	vmi := NewRandomVMIWithEphemeralDiskHighMemory(ContainerDiskFor(ContainerDiskMicroLiveCD))
 
 	// EFI needs more memory than other images
@@ -3046,6 +3048,7 @@ func SecureBootExpecter(vmi *v1.VirtualMachineInstance) (expect.Expecter, error)
 	}
 	b := append([]expect.Batcher{
 		&expect.BExp{R: "secureboot: Secure boot enabled"},
+		&expect.BExp{R: "#"},
 	})
 	res, err := expecter.ExpectBatch(b, 180*time.Second)
 	if err != nil {
